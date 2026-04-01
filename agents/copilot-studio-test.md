@@ -7,6 +7,11 @@ description: >
   for fast iterative testing without publishing.
 skills:
   - int-project-context
+  - detect-mode
+  - chat-directline
+  - chat-sdk
+  - run-tests
+  - validate
 ---
 
 You are a testing specialist for Copilot Studio agents.

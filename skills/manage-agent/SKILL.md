@@ -144,7 +144,9 @@ Returns JSON: `{ "valid": true|false, "summary": { "errors": N, "warnings": N },
 
 ### Clone (download agent to new local folder)
 
-Requires `--agent-id` (the bot GUID from `list-agents`). Uses Island API token automatically.
+Requires either `--agent-id` (the bot GUID from `list-agents`) **or** `--url` (a Copilot Studio web URL). Uses Island API token automatically.
+
+**With explicit IDs:**
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/../../scripts/manage-agent.bundle.js clone \
@@ -155,6 +157,17 @@ node ${CLAUDE_SKILL_DIR}/../../scripts/manage-agent.bundle.js clone \
   --agent-mgmt-url "<mgmtUrl>" \
   --agent-id "<agentId>"
 ```
+
+**With a Copilot Studio URL (recommended shortcut):**
+
+```bash
+node ${CLAUDE_SKILL_DIR}/../../scripts/manage-agent.bundle.js clone \
+  --workspace "<target-folder>" \
+  --tenant-id "<tenantId>" \
+  --url "https://copilotstudio.microsoft.com/environments/<envId>/bots/<agentId>/overview"
+```
+
+When `--url` is provided, the script extracts `environmentId` and `agentId` from the URL and resolves `environmentUrl` and `agentMgmtUrl` automatically via the BAP API. The `--url` flag also works with `push`, `pull`, `changes`, and `validate` commands.
 
 ### View Changes (diff local vs remote)
 

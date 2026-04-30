@@ -46,7 +46,28 @@ Each `conn.json` contains `TenantId`, `EnvironmentId`, `DataverseEndpoint`, `Age
 
 If the user picks one → extract `tenantId`, `environmentId`, `environmentUrl`, `agentMgmtUrl` and **skip to Phase 2** (or Phase 1 if they want a different environment).
 
-### 0b. Ask the user
+### 0b. Check for a Copilot Studio URL
+
+If the user pastes a Copilot Studio URL (e.g. from their browser while viewing the agent), extract environment and agent IDs directly — no need for `list-envs` or `list-agents`.
+
+Recognised URL formats:
+```
+https://copilotstudio.microsoft.com/environments/<envId>/bots/<agentId>/overview
+https://copilotstudio.preview.microsoft.com/environments/<envId>/bots/<agentId>
+```
+
+If the user provides a URL like this, you still need a `tenantId` (from a `conn.json` or by asking the user). Then **skip to Phase 3**, passing `--url` instead of `--agent-id` / `--environment-id` / `--environment-url` / `--agent-mgmt-url`:
+
+```bash
+node ${CLAUDE_SKILL_DIR}/../../scripts/manage-agent.bundle.js clone \
+  --workspace "." \
+  --tenant-id "<tenantId>" \
+  --url "<copilotStudioUrl>"
+```
+
+The script will parse the URL to extract the environment ID and agent ID, then resolve the remaining environment details (Dataverse URL, agent management URL) automatically via the BAP API.
+
+### 0c. Ask the user
 
 If no `conn.json` found (or user wants a different tenant) → ask for their **tenant ID** (required).
 

@@ -30,7 +30,7 @@ const { randomUUID } = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { log, die } = require("./shared-utils");
+const { log, die, sleep } = require("./shared-utils");
 const {
   VSCODE_CLIENT_ID,
   getIslandResourceId,
@@ -48,6 +48,48 @@ const {
 
 function warn(msg) {
   process.stderr.write("[WARN] " + msg + "\n");
+}
+
+// ---------------------------------------------------------------------------
+// URL parsing — extract environmentId + agentId from Copilot Studio URLs
+// ---------------------------------------------------------------------------
+
+const COPILOT_STUDIO_HOST_RE = /^copilotstudio(?:\.preview)?\.microsoft\.com$/i;
+
+/**
+ * Parse a Copilot Studio web URL and extract environmentId + agentId.
+ *
+ * Accepted formats:
+ *   https://copilotstudio.microsoft.com/environments/<envId>/bots/<agentId>[/...]
+ *   https://copilotstudio.preview.microsoft.com/environments/<envId>/bots/<agentId>[/...]
+ *
+ * @param {string} url — Copilot Studio URL
+ * @returns {{ environmentId: string, agentId: string }} or null if the URL doesn't match
+ */
+function parseAgentUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  if (!COPILOT_STUDIO_HOST_RE.test(parsed.hostname)) return null;
+
+  // pathname: /environments/<envId>/bots/<agentId>[/overview|/canvas|...]
+  const segments = parsed.pathname.split("/").filter(Boolean);
+  const envIdx = segments.indexOf("environments");
+  const botsIdx = segments.indexOf("bots");
+
+  if (envIdx === -1 || botsIdx === -1 || botsIdx <= envIdx + 1 || botsIdx + 1 >= segments.length) {
+    return null;
+  }
+
+  const environmentId = decodeURIComponent(segments[envIdx + 1]);
+  const agentId = decodeURIComponent(segments[botsIdx + 1]);
+
+  if (!environmentId || !agentId) return null;
+  return { environmentId, agentId };
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +113,7 @@ function parseArgs() {
     owner: true, // default: filter by owner
     timeout: 300000, // default: 5 minutes for publish polling
     force: false,
+    url: null,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -116,6 +159,9 @@ function parseArgs() {
       case "--force":
         parsed.force = true;
         break;
+      case "--url":
+        parsed.url = args[++i];
+        break;
       default:
         if (!args[i].startsWith("--") && !parsed.command) {
           parsed.command = args[i];
@@ -129,6 +175,20 @@ function parseArgs() {
       "Usage: manage-agent <command> [options]\n" +
         "Commands: auth, push, pull, clone, changes, validate, publish, list-agents, list-envs"
     );
+  }
+
+  // When --url is provided, extract environmentId and agentId from the URL
+  if (parsed.url) {
+    const urlInfo = parseAgentUrl(parsed.url);
+    if (!urlInfo) {
+      die(
+        `Could not parse Copilot Studio URL: ${parsed.url}\n` +
+          "Expected format: https://copilotstudio.microsoft.com/environments/<envId>/bots/<agentId>"
+      );
+    }
+    if (!parsed.environmentId) parsed.environmentId = urlInfo.environmentId;
+    if (!parsed.agentId) parsed.agentId = urlInfo.agentId;
+    log(`Parsed URL → environmentId: ${urlInfo.environmentId}, agentId: ${urlInfo.agentId}`);
   }
 
   return parsed;
@@ -682,6 +742,70 @@ function buildSyncRequest(args, tokens) {
 // Commands
 // ---------------------------------------------------------------------------
 
+const LSP_TRANSIENT_SSL_MAX_ATTEMPTS = 3;
+const LSP_TRANSIENT_SSL_RETRY_DELAY_MS = 3000;
+
+function isTransientSslError(message) {
+  return /ssl connection could not be established/i.test(message || "");
+}
+
+function isLspErrorCode(code) {
+  return code < 0 || code >= 400;
+}
+
+function buildLspError(method, result) {
+  if (
+    result &&
+    typeof result === "object" &&
+    typeof result.code === "number" &&
+    isLspErrorCode(result.code)
+  ) {
+    const message = result.message || "LSP request failed";
+    const retryHint = isTransientSslError(message)
+      ? " This is sometimes transient; retry the command if it continues after automatic retries."
+      : "";
+    return new Error(`${method} failed: ${message} (code ${result.code}).${retryHint}`);
+  }
+  return null;
+}
+
+async function sendCustomRequestWithRetries(client, method, request, options = {}) {
+  const maxAttempts = options.maxAttempts || LSP_TRANSIENT_SSL_MAX_ATTEMPTS;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await client.sendCustomRequest(method, request);
+      const error = buildLspError(method, result);
+      if (!error) return result;
+
+      if (!isTransientSslError(error.message) || attempt === maxAttempts) {
+        throw error;
+      }
+    } catch (error) {
+      if (error.message && error.message.startsWith(`${method} failed:`)) {
+        throw error;
+      }
+      if (isTransientSslError(error.message) && attempt === maxAttempts) {
+        throw new Error(
+          `${method} failed: ${error.message}. ` +
+            "This is sometimes transient; retry the command if it continues after automatic retries."
+        );
+      }
+      if (!isTransientSslError(error.message) || attempt === maxAttempts) {
+        throw error;
+      }
+    }
+
+    log(
+      `[retry] ${method} failed with a transient SSL error ` +
+        `(attempt ${attempt}/${maxAttempts}). Retrying in ${LSP_TRANSIENT_SSL_RETRY_DELAY_MS / 1000}s...`
+    );
+    await sleep(LSP_TRANSIENT_SSL_RETRY_DELAY_MS);
+  }
+
+  throw new Error(`${method} failed after ${maxAttempts} attempts`);
+}
+
 async function cmdAuth(args) {
   if (!args.tenantId) die("--tenant-id (or CPS_TENANT_ID) is required");
   if (!args.environmentUrl) die("--environment-url (or CPS_ENVIRONMENT_URL) is required");
@@ -755,9 +879,19 @@ async function acquireLspTokens(args) {
 async function cmdWithLsp(args, method) {
   if (!args.workspace) die("--workspace is required");
   if (!args.tenantId) die("--tenant-id (or CPS_TENANT_ID) is required");
-  if (!args.environmentUrl) die("--environment-url (or CPS_ENVIRONMENT_URL) is required");
-  if (!args.environmentId) die("--environment-id (or CPS_ENVIRONMENT_ID) is required");
-  if (!args.agentMgmtUrl) die("--agent-mgmt-url (or CPS_AGENT_MGMT_URL) is required");
+  if (!args.environmentId) die("--environment-id (or --url / CPS_ENVIRONMENT_ID) is required");
+
+  if (!args.environmentUrl || !args.agentMgmtUrl) {
+    log("Resolving environment details from BAP API...");
+    const envDetails = await resolveEnvironmentById(args.tenantId, args.environmentId);
+    if (!args.environmentUrl) args.environmentUrl = envDetails.dataverseUrl;
+    if (!args.agentMgmtUrl) args.agentMgmtUrl = envDetails.agentManagementUrl;
+    if (!args.environmentName) args.environmentName = envDetails.displayName;
+    log(`Resolved: ${envDetails.displayName} (${envDetails.dataverseUrl})`);
+  }
+
+  if (!args.environmentUrl) die("Could not resolve --environment-url (or CPS_ENVIRONMENT_URL)");
+  if (!args.agentMgmtUrl) die("Could not resolve --agent-mgmt-url (or CPS_AGENT_MGMT_URL)");
 
   const tokens = await acquireLspTokens(args);
   const binaryInfo = findBinary();
@@ -785,7 +919,7 @@ async function cmdWithLsp(args, method) {
 
     const request = buildSyncRequest(args, tokens);
     log(`Calling ${method}...`);
-    const result = await client.sendCustomRequest(method, request);
+    const result = await sendCustomRequestWithRetries(client, method, request);
 
     process.stdout.write(
       JSON.stringify({ status: "ok", method, result }, null, 2) + "\n"
@@ -798,9 +932,18 @@ async function cmdWithLsp(args, method) {
 async function cmdValidate(args) {
   if (!args.workspace) die("--workspace is required");
   if (!args.tenantId) die("--tenant-id (or CPS_TENANT_ID) is required");
-  if (!args.environmentUrl) die("--environment-url (or CPS_ENVIRONMENT_URL) is required");
-  if (!args.environmentId) die("--environment-id (or CPS_ENVIRONMENT_ID) is required");
-  if (!args.agentMgmtUrl) die("--agent-mgmt-url (or CPS_AGENT_MGMT_URL) is required");
+  if (!args.environmentId) die("--environment-id (or --url / CPS_ENVIRONMENT_ID) is required");
+
+  if (!args.environmentUrl || !args.agentMgmtUrl) {
+    log("Resolving environment details from BAP API...");
+    const envDetails = await resolveEnvironmentById(args.tenantId, args.environmentId);
+    if (!args.environmentUrl) args.environmentUrl = envDetails.dataverseUrl;
+    if (!args.agentMgmtUrl) args.agentMgmtUrl = envDetails.agentManagementUrl;
+    if (!args.environmentName) args.environmentName = envDetails.displayName;
+  }
+
+  if (!args.environmentUrl) die("Could not resolve --environment-url (or CPS_ENVIRONMENT_URL)");
+  if (!args.agentMgmtUrl) die("Could not resolve --agent-mgmt-url (or CPS_AGENT_MGMT_URL)");
 
   const tokens = await acquireLspTokens(args);
   const binaryInfo = findBinary();
@@ -944,6 +1087,43 @@ async function cmdListEnvs(args) {
 }
 
 // ---------------------------------------------------------------------------
+// Resolve environment details by ID — used when --url provides only env + agent IDs
+// ---------------------------------------------------------------------------
+
+async function resolveEnvironmentById(tenantId, environmentId) {
+  const bapToken = await getOrAcquireToken(
+    tenantId,
+    VSCODE_CLIENT_ID,
+    [BAP_TOKEN_SCOPE],
+    "Power Platform API (env lookup)"
+  );
+
+  const url =
+    `https://${BAP_HOST}/providers/Microsoft.BusinessAppPlatform/environments/${encodeURIComponent(environmentId)}` +
+    `?api-version=2024-05-01&$expand=properties.permissions`;
+
+  log(`Resolving environment details for ${environmentId}...`);
+  const env = await httpGetJson(url, bapToken.accessToken);
+
+  const meta = env.properties?.linkedEnvironmentMetadata;
+  if (!meta?.instanceUrl) {
+    throw new Error(
+      `Environment ${environmentId} has no linked Dataverse instance. ` +
+        "It may not have been provisioned or you may not have access."
+    );
+  }
+
+  return {
+    environmentId: env.name,
+    displayName: env.properties.displayName,
+    dataverseUrl: meta.instanceUrl,
+    agentManagementUrl:
+      env.properties.runtimeEndpoints?.["microsoft.PowerVirtualAgents"] || null,
+    environmentSku: env.properties.environmentSku,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Publish — trigger PvaPublish bound action and poll for completion
 // ---------------------------------------------------------------------------
 
@@ -1038,9 +1218,18 @@ async function cmdPublish(args) {
 async function cmdChanges(args) {
   if (!args.workspace) die("--workspace is required");
   if (!args.tenantId) die("--tenant-id (or CPS_TENANT_ID) is required");
-  if (!args.environmentUrl) die("--environment-url (or CPS_ENVIRONMENT_URL) is required");
-  if (!args.environmentId) die("--environment-id (or CPS_ENVIRONMENT_ID) is required");
-  if (!args.agentMgmtUrl) die("--agent-mgmt-url (or CPS_AGENT_MGMT_URL) is required");
+  if (!args.environmentId) die("--environment-id (or --url / CPS_ENVIRONMENT_ID) is required");
+
+  if (!args.environmentUrl || !args.agentMgmtUrl) {
+    log("Resolving environment details from BAP API...");
+    const envDetails = await resolveEnvironmentById(args.tenantId, args.environmentId);
+    if (!args.environmentUrl) args.environmentUrl = envDetails.dataverseUrl;
+    if (!args.agentMgmtUrl) args.agentMgmtUrl = envDetails.agentManagementUrl;
+    if (!args.environmentName) args.environmentName = envDetails.displayName;
+  }
+
+  if (!args.environmentUrl) die("Could not resolve --environment-url (or CPS_ENVIRONMENT_URL)");
+  if (!args.agentMgmtUrl) die("Could not resolve --agent-mgmt-url (or CPS_AGENT_MGMT_URL)");
 
   const agentDir = findAgentDir(args.workspace);
   const conn = loadConnJson(agentDir);
@@ -1157,10 +1346,22 @@ async function fetchAgentInfo(envUrl, agentId, accessToken) {
 async function cmdClone(args) {
   if (!args.workspace) die("--workspace is required");
   if (!args.tenantId) die("--tenant-id (or CPS_TENANT_ID) is required");
-  if (!args.environmentUrl) die("--environment-url (or CPS_ENVIRONMENT_URL) is required");
-  if (!args.environmentId) die("--environment-id (or CPS_ENVIRONMENT_ID) is required");
-  if (!args.agentMgmtUrl) die("--agent-mgmt-url (or CPS_AGENT_MGMT_URL) is required");
-  if (!args.agentId) die("--agent-id is required for clone");
+  if (!args.agentId) die("--agent-id (or --url) is required for clone");
+  if (!args.environmentId) die("--environment-id (or --url / CPS_ENVIRONMENT_ID) is required");
+
+  // When --url was used, environmentUrl and agentMgmtUrl may be missing.
+  // Resolve them from the BAP API using the environmentId extracted from the URL.
+  if (!args.environmentUrl || !args.agentMgmtUrl) {
+    log("Resolving environment details from BAP API...");
+    const envDetails = await resolveEnvironmentById(args.tenantId, args.environmentId);
+    if (!args.environmentUrl) args.environmentUrl = envDetails.dataverseUrl;
+    if (!args.agentMgmtUrl) args.agentMgmtUrl = envDetails.agentManagementUrl;
+    if (!args.environmentName) args.environmentName = envDetails.displayName;
+    log(`Resolved: ${envDetails.displayName} (${envDetails.dataverseUrl})`);
+  }
+
+  if (!args.environmentUrl) die("Could not resolve --environment-url (or CPS_ENVIRONMENT_URL)");
+  if (!args.agentMgmtUrl) die("Could not resolve --agent-mgmt-url (or CPS_AGENT_MGMT_URL)");
 
   const envUrl = args.environmentUrl.replace(/\/+$/, "");
 
@@ -1209,7 +1410,8 @@ async function cmdClone(args) {
     };
 
     log("Calling powerplatformls/cloneAgent...");
-    const result = await client.sendCustomRequest(
+    const result = await sendCustomRequestWithRetries(
+      client,
       "powerplatformls/cloneAgent",
       request
     );
@@ -1268,6 +1470,11 @@ async function main() {
   // Ensure Node exits even if stale event-loop handles linger (e.g. from
   // the LSP binary's pipe server or unresolved timers).
   process.exit(0);
+}
+
+// Expose helpers for testing when loaded as a module
+if (typeof module !== "undefined") {
+  module.exports = { parseAgentUrl };
 }
 
 main();

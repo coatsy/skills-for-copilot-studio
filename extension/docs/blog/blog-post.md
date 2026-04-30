@@ -45,7 +45,7 @@ graph TB
 
         subgraph author_grp["@copilot-studio-author"]
             direction TB
-            author_skills["SKILLS<br/><br/>new-topic<br/>add-node<br/>add-action<br/>edit-action<br/>add-knowledge<br/>add-generative-answers<br/>add-other-agents<br/>add-global-variable<br/>edit-agent<br/>edit-triggers<br/>add-adaptive-card<br/>best-practices<br/>validate<br/>lookup-schema<br/>list-kinds<br/>list-topics"]
+            author_skills["SKILLS<br/><br/>new-topic<br/>add-node<br/>add-action<br/>edit-action<br/>add-knowledge<br/>add-generative-answers<br/>add-other-agents<br/>add-global-variable<br/>edit-agent<br/>edit-triggers<br/>add-adaptive-card<br/>patterns<br/>authoring-tips<br/>validate<br/>lookup-schema<br/>list-kinds<br/>list-topics"]
         end
 
         subgraph manage_grp["@copilot-studio-manage"]
@@ -110,7 +110,7 @@ The toolkit provides four agents, each focused on a distinct phase of agent deve
 
 Each agent is a Markdown file with structured instructions that tell the LLM how to approach a specific class of tasks. The agents enforce strict skill usage — they never write YAML manually. Every operation goes through a skill that has the correct templates, schema validation, and patterns.
 
-### Twenty-four skills across six categories
+### Thirty-three skills across nine categories
 
 Skills are the building blocks. Each skill is a `SKILL.md` file in its own directory, containing detailed instructions, schema references, and templates for a specific operation:
 
@@ -119,9 +119,12 @@ Skills are the building blocks. Each skill is a `SKILL.md` file in its own direc
 | **Authoring** | `new-topic`, `add-action`, `add-node`, `add-knowledge`, `add-adaptive-card`, `add-generative-answers`, `add-global-variable`, `add-other-agents` |
 | **Editing** | `edit-agent`, `edit-action`, `edit-triggers` |
 | **Validation** | `validate`, `lookup-schema`, `list-kinds`, `list-topics` |
-| **Testing** | `chat-with-agent`, `directline-chat`, `run-tests` |
+| **Testing** | `chat-with-agent`, `chat-directline`, `chat-sdk`, `directline-chat`, `run-tests-kit`, `test-auth`, `create-eval`, `create-eval-set`, `detect-mode` |
+| **Evaluation** | `analyze-evals`, `run-eval` |
 | **Management** | `manage-agent`, `clone-agent` |
-| **Best practices** | `best-practices` (JIT glossary loading, user context provisioning, dynamic topic redirects, orchestrator patterns) |
+| **Patterns & Tips** | `patterns` (reusable implementation architectures), `authoring-tips` (practical tips and workarounds) |
+| **Troubleshooting** | `known-issues` |
+| **Internal** | `int-project-context`, `int-reference` |
 
 ### Where the skills came from
 

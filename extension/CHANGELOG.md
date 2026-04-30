@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.9
+
+### Changed
+
+- **`best-practices`** skill split into two focused skills: **`patterns`** (repeatable implementation architectures) and **`authoring-tips`** (practical tips and workarounds)
+- Clarified index-first skill routing for pattern and authoring-tip descriptions
+- Updated skills count from 28 to 33, adding previously undocumented skills: `analyze-evals`, `create-eval-set`, `run-eval`, `run-tests-kit`, `test-auth`
+
+### Added
+
+- **`manage-agent`** / **`clone-agent`** — identify agent from Copilot Studio URL via `--url` flag
+- Agent URL parser with comprehensive test suite (`parse-agent-url.test.js`)
+
+### Fixed
+
+- Retry transient SSL failures during LSP requests in manage-agent
+- Surface LSP error responses from clone and sync operations
+- Broken relative link to `orchestrator-variables.md`
+
+### Upstream Changes
+
+- Upstream release `v1.0.9` (`release/2026-W17`)
+
 ## 1.0.8
 
 ### Changed

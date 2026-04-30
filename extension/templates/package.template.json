@@ -5,7 +5,7 @@
     "workspace",
     "ui"
   ],
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Copilot Studio YAML authoring, testing, and management skills for GitHub Copilot",
   "publisher": "coatsy",
   "repository": {

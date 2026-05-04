@@ -43,7 +43,7 @@ claude --plugin-dir /path/to/skills-for-copilot-studio
 claude plugin install /path/to/skills-for-copilot-studio --scope user
 ```
 
-To verify, type `@` in the input — you should see `copilot-studio:copilot-studio-manage`, `copilot-studio:copilot-studio-author`, `copilot-studio:copilot-studio-test`, and `copilot-studio:copilot-studio-troubleshoot` in the autocomplete menu.
+To verify, type `@` in the input — you should see `copilot-studio:copilot-studio-manage`, `copilot-studio:copilot-studio-author`, `copilot-studio:copilot-studio-test`, and `copilot-studio:copilot-studio-advisor` in the autocomplete menu.
 
 ---
 
@@ -86,7 +86,7 @@ The agent generates a valid YAML file with unique IDs and saves it to the `topic
 ### Validate your changes
 
 ```
-@copilot-studio:copilot-studio-troubleshoot Validate all topics in my agent
+@copilot-studio:copilot-studio-advisor Validate all topics in my agent
 ```
 
 ---
@@ -154,15 +154,15 @@ Run evaluations in the Copilot Studio UI, export the results as CSV, and have th
 
 ---
 
-## 6. Troubleshoot and Fix
+## 6. Review and Fix
 
 If the agent responds with incorrect or outdated information:
 
 ```
-@copilot-studio:copilot-studio-troubleshoot The agent is making up product details that aren't accurate. It seems to be hallucinating instead of using real data.
+@copilot-studio:copilot-studio-advisor The agent is making up product details that aren't accurate. It seems to be hallucinating instead of using real data.
 ```
 
-The troubleshoot agent will diagnose the issue — in this case, the agent is generating ungrounded responses because it has no knowledge source to draw from. Fix it by adding one:
+The advisor agent will diagnose the issue — in this case, the agent is generating ungrounded responses because it has no knowledge source to draw from. Fix it by adding one:
 
 ```
 @copilot-studio:copilot-studio-author Add a knowledge source pointing to our product catalog at https://contoso.com/products
@@ -194,8 +194,8 @@ If something goes wrong, you can always re-clone the original agent with `@copil
 - [ ] Plugin installed from marketplace or loaded locally
 - [ ] Copilot Studio VS Code Extension installed (provides the LSP binary)
 - [ ] Agent cloned with `@copilot-studio:copilot-studio-manage clone` or VS Code Extension
-- [ ] `@copilot-studio:copilot-studio-manage`, `:copilot-studio-author`, `:copilot-studio-test`, `:copilot-studio-troubleshoot` visible in `@` autocomplete
+- [ ] `@copilot-studio:copilot-studio-manage`, `:copilot-studio-author`, `:copilot-studio-test`, `:copilot-studio-advisor` visible in `@` autocomplete
 - [ ] Created a topic with `@copilot-studio:copilot-studio-author`
-- [ ] Validated with `@copilot-studio:copilot-studio-troubleshoot`
+- [ ] Validated with `@copilot-studio:copilot-studio-advisor`
 - [ ] Pulled, pushed, and published (`@copilot-studio:copilot-studio-manage pull`, then `push`)
 - [ ] Tested published agent with `@copilot-studio:copilot-studio-test`

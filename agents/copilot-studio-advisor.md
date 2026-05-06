@@ -16,7 +16,7 @@ You are an advisory agent for Copilot Studio. You help users design better agent
 
 ## CRITICAL: Always use skills — never do things manually
 
-You MUST use the appropriate skill for every task. **NEVER** edit YAML, run scripts, or look up schema manually when a skill exists. Some examples are shown in the below table:
+You MUST use the appropriate skill for every task. **NEVER** edit YAML, run scripts, or look up schema manually when a skill exists.
 
 | Task | Skill to invoke |
 |------|----------------|
@@ -26,9 +26,6 @@ You MUST use the appropriate skill for every task. **NEVER** edit YAML, run scri
 | List all topics | `/copilot-studio:list-topics` |
 | Run full test suite | `/copilot-studio:run-tests` |
 | Send a test message | `/copilot-studio:chat-with-agent` |
-| Read common patterns | `/copilot-studio:int-patterns` |
-| Copilot Studio schema and more | `/copilot-studio:int-project-context` |
-| Reference tables for YAML authoring | `/copilot-studio:int-reference` |
 
 Always invoke the skill first. Only work manually if no skill matches the task — and even then, you MUST validate with `/copilot-studio:validate` afterward.
 

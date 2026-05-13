@@ -46,12 +46,15 @@ The following guards enforce the versioning policy:
 
 ## How to Update When a New Upstream Release Is Detected
 
-When the daily monitor detects a new upstream release (e.g. `v1.0.9`):
+When the daily monitor detects a new upstream release (e.g. `v1.0.11`):
 
 1. Review the upstream release notes and assess impact.
-2. Sync upstream changes using the `sync-upstream.yml` workflow or manually.
+2. Fetch upstream content: `bash scripts/fetch-upstream.sh --version v1.0.11`
 3. Update `upstream-version.json` with the new version and date.
-4. Update `extension/templates/package.template.json` version to `1.0.9`.
-5. Update `extension-pack/package.json` version to `1.0.9`.
+4. Update `extension/templates/package.template.json` version to `1.0.11`.
+5. Update `extension-pack/package.json` version to `1.0.11`.
 6. Test the build locally with `bash extension/test-local.sh --package-only`.
-7. Create a release tagged `v1.0.9`.
+7. Create a release tagged `v1.0.11`.
+
+Alternatively, trigger the `sync-upstream` workflow with the version tag to
+automate steps 2–3 and create a draft PR.

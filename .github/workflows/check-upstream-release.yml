@@ -28,11 +28,10 @@ jobs:
 
       - name: Fetch latest upstream release
         id: upstream
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Use unauthenticated request to avoid SAML SSO enforcement
+          # (the upstream repo is public, so no auth is needed)
           RESPONSE=$(curl -sf \
-            -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/microsoft/skills-for-copilot-studio/releases/latest")
 

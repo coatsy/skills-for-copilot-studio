@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.10
+
+### Changed
+
+- **`troubleshoot`** agent replaced by **`advisor`** agent — the new Advisor agent presents pattern suggestions and validates topics, replacing the former Troubleshoot agent
+- **`best-practices`** and **`known-issues`** skills replaced by a unified **pattern library** (`patterns/`) with frontmatter-driven status and an **`int-patterns`** internal skill for index-based routing
+- **`authoring-tips`** skill removed; tips content consolidated into the pattern library
+- SharePoint knowledge guide updated to reflect runtime end-user permission model (removed references to service account/maker permissions for indexing)
+- MCP action metadata updated for `release/2026-W18`
+- Skill usage guidelines clarified across agent instructions
+
+### Added
+
+- **Pattern library** (`patterns/`) at repo root with 7 standalone pattern files: `date-context`, `dynamic-topic-redirect`, `jit-glossary`, `jit-user-context`, `orchestrator-variables`, `prevent-child-agent-responses`, `prevent-tool-call-leaks`
+- **`int-patterns`** internal skill for pattern index lookup and routing
+
+### Upstream Changes
+
+- Upstream release `v1.0.10` (`release/2026-W18`)
+
 ## 1.0.9
 
 ### Changed

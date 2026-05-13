@@ -65,13 +65,13 @@ The update process depends on how you installed the plugin:
 
 ## Usage
 
-The plugin provides four commands, each backed by a specialized agent:
+The plugin provides four sub-agents, each backed by a specialized agent:
 
 ```
 /copilot-studio:copilot-studio-manage       Clone, push, pull, and sync agent content between local files and the cloud
 /copilot-studio:copilot-studio-author       Create and edit YAML (topics, actions, knowledge, triggers, variables)
 /copilot-studio:copilot-studio-test         Test published agents — point-tests, batch suites, or evaluation analysis
-/copilot-studio:copilot-studio-troubleshoot Debug issues — wrong topic routing, validation errors, unexpected behavior
+/copilot-studio:copilot-studio-advisor Design guidance, agent review, and troubleshooting
 ```
 
 ## Quick Start
@@ -90,8 +90,8 @@ The plugin provides four commands, each backed by a specialized agent:
 # Publish in Copilot Studio UI, then test
 /copilot-studio:copilot-studio-test Send "How do I request a new laptop?" to the published agent
 
-# Troubleshoot and fix issues
-/copilot-studio:copilot-studio-troubleshoot The agent is hallucinating — it's not using real data from our knowledge base
+# Get design advice and review
+/copilot-studio:copilot-studio-advisor Review my agent for improvements and known pitfalls
 ```
 
 See [SETUP_GUIDE.md](SETUP_GUIDE.md) for a full end-to-end walkthrough including validation, testing options, and troubleshooting.

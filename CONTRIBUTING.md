@@ -156,16 +156,16 @@ Script conventions:
 .claude-plugin/          # Plugin manifest and marketplace config
 .github/plugin/          # GitHub Copilot Plugin manifest to speedup discovery
 .github/workflows/       # CI/CD (build-extension.yml)
-agents/                  # Sub-agent definitions (author, test, troubleshoot, manage)
+agents/                  # Sub-agent definitions (advisor, author, manage, test)
 evals/                   # Scenario-based eval framework (harness, report, fixtures)
   scenarios/             # Eval definitions per scenario (<name>.json)
   hooks/                 # Eval-only hooks (skill tracing via PreToolUse)
 extension/               # VS Code extension packaging (test-local.sh, templates, docs)
 hooks/                   # Session hooks (agent routing)
 skills/                  # Skill definitions (entry points + internal skills)
-  patterns/              # Repeatable reference architectures (JIT glossary, user context, orchestrator variables)
-  authoring-tips/        # Practical tips & workarounds (date context, dynamic redirects, child agent control)
+  int-patterns/          # Internal skill indexing the pattern library
   ...                    # Other skills (add-knowledge, new-topic, etc.)
+patterns/                # Reusable design patterns (JIT glossary, orchestrator variables, etc.)
 scripts/                 # Bundled tools (schema lookup, chat-with-agent)
   src/                   # Source code
 reference/               # Copilot Studio YAML schema
@@ -173,50 +173,29 @@ templates/               # YAML templates for common patterns
 tests/                   # Test runner for Copilot Studio Kit integration
 ```
 
-## Contributing to patterns and authoring tips
+## Contributing to the pattern library
 
-The `skills/` directory has two places for sharing reusable knowledge beyond individual skill definitions:
+The `patterns/` directory at the repo root contains reusable design patterns for Copilot Studio agents. Each pattern is a standalone `.md` file with structured frontmatter and consistent body sections.
 
-### `skills/patterns/` — Repeatable Patterns
+**Frontmatter schema:**
+```yaml
+---
+name: <pattern name>
+description: <one-line description>
+challenge: <what problem does this solve>
+status: proven | recommended | experimental
+tags: [tag1, tag2, ...]
+---
+```
 
-Reference architectures that describe **how to build a specific capability** end-to-end for a Copilot Studio agent. Each pattern is a complete implementation guide with architecture diagrams, step-by-step instructions, YAML examples, and validation checklists.
+**Body sections:** `## Pattern`, `## When to Use`, `## YAML Example`, `## Pitfalls`
 
-**Current patterns:**
-- **JIT Glossary** — load customer acronyms into a global variable at conversation start
-- **JIT User Context** — load the user's M365 profile for personalized answers
-- **Orchestrator Variables** — classify queries at orchestration time for knowledge routing
-
-**When to add a new pattern:** you've built a multi-step capability that other agent authors would reuse as-is — it involves creating multiple files (topics, variables, knowledge sources, instructions) that work together.
-
-**How to contribute:**
-1. Create a new `.md` file in `skills/patterns/` with the full implementation guide
-2. Add an index entry in `skills/patterns/SKILL.md` following the existing format
-3. Keep the SKILL.md frontmatter description broad; do not add pattern-specific keyword lists unless the overall skill boundary changes
-
-### `skills/authoring-tips/` — Authoring Tips
-
-Practical tips, techniques, and workarounds learned from building agents with Copilot Studio. These address platform limitations, improve authoring ergonomics, or share non-obvious techniques.
-
-**Current tips:**
-- **Date Context** — inject today's date into agent instructions via Power FX
-- **Dynamic Topic Redirect** — use `Switch()` in `BeginDialog` instead of nested conditions
-- **Prevent Child Agent Responses** — stop connected agents from messaging users directly
-
-**When to add a new tip:** you've discovered a technique or workaround that isn't obvious from the documentation — something that saves time or avoids a known pitfall.
+Pattern files are pure knowledge — no implementation steps, no skill references. The Advisor agent presents them as suggestions; the Author agent references their YAML examples during implementation.
 
 **How to contribute:**
-1. Create a new `.md` file in `skills/authoring-tips/` with the tip, including the problem, solution, and a YAML example
-2. Add an index entry in `skills/authoring-tips/SKILL.md` following the existing format
-3. Keep the SKILL.md frontmatter description broad; do not add tip-specific keyword lists unless the overall skill boundary changes
-
-### Choosing between the two
-
-| | Patterns | Authoring Tips |
-|---|---|---|
-| **Scope** | Full capability (multiple files, end-to-end) | Single technique or workaround |
-| **Length** | Detailed guide with steps, templates, checklists | Concise explanation with one YAML example |
-| **Reuse** | Copied and adapted per agent | Applied as-needed during authoring |
-| **Example** | "Set up country-based knowledge routing" | "Use `Switch()` instead of nested conditions" |
+1. Create a new `.md` file in `patterns/` following the frontmatter schema and body sections above
+2. Add an index entry in `skills/int-patterns/SKILL.md` with a "Read this pattern when…" block
+3. Set `status` to `experimental` for new patterns until validated in production
 
 ## Scenario evals
 

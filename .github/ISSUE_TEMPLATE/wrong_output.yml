@@ -11,7 +11,7 @@ body:
         - copilot-studio-author
         - copilot-studio-manage
         - copilot-studio-test
-        - copilot-studio-troubleshoot
+        - copilot-studio-advisor
         - Not applicable
     validations:
       required: true

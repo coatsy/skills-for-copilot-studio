@@ -1,6 +1,6 @@
 # Knowledge Architecture & Best Practices
 
-Detailed guidance on how knowledge retrieval works, source selection, content quality, security, maintenance, and advanced patterns.
+Detailed guidance on how knowledge retrieval works, source selection, content quality, maintenance, and advanced patterns.
 
 ## How Knowledge Works
 
@@ -104,12 +104,12 @@ Use the template at `templates/knowledge/graph-connector.knowledge.mcs.yml`.
 - Subdomains are treated as separate sources; add them individually if needed
 
 **SharePoint:**
-- Use the deepest folder path that covers the needed documents (avoid sharing the root site)
+- Use the deepest folder path that covers the needed documents (avoid using the root site)
 - Encode spaces as `%20` in the URL
 - Supported document types: PDF, Word (.docx), PowerPoint (.pptx), plain text
-- Ensure the agent's service account has read access to the SharePoint site
 - Example: `https://contoso.sharepoint.com/sites/HR/Shared%20Documents/Policies`
 - **Limitation:** SharePoint knowledge sources use semantic search that returns relevant chunks, not full file content. For scenarios requiring complete file retrieval (e.g., JIT glossaries), use Dataverse storage or Agent Flows with SharePoint connectors
+- SharePoint as a knowledge source enforces delegated permissions at runtime and assesses the access the end user has to the content in SharePoint itself. Users must have access to content within the SharePoint site or library being added as a knowledge source to ensure the agent can respond to their queries.
 
 ### Content Quality
 - Documents should have clear headings and titles — Copilot Studio uses these for chunking and citation
@@ -124,11 +124,6 @@ Use the template at `templates/knowledge/graph-connector.knowledge.mcs.yml`.
 - Prefer narrower, well-scoped sources over broad ones
 - Test knowledge sources with representative user queries after adding them
 
-### Security Considerations
-- **SharePoint**: the agent uses a service account — all users receive answers from all content the service account can access, regardless of the user's own SharePoint permissions
-- Do not index folders containing confidential or restricted documents unless every user of the agent is authorized to see them
-- For multi-audience agents (e.g. HR + general staff), use separate knowledge sources per audience and control access at the topic level
-
 ### Maintenance
 - Public websites are re-crawled periodically — URL changes silently break indexing; monitor source URLs for redirects or removal
 - SharePoint: new files added to the indexed folder are picked up automatically; renaming or moving files breaks existing citations
@@ -137,7 +132,7 @@ Use the template at `templates/knowledge/graph-connector.knowledge.mcs.yml`.
 
 ### Testing & Validation
 - After adding a source, ask the agent a representative question to verify retrieval from the new source
-- If the agent says "I don't have information about that", check: (1) URL is correct and accessible, (2) site is publicly crawlable or SharePoint permissions are in place, (3) content is text-based and not image-only
+- If the agent says "I don't have information about that", check: (1) URL is correct and accessible, (2) the user invoking the agent has access to the SharePoint site or library being used as the knowledge source, (3) content is text-based and not image-only
 - Use multiple test queries per source — a single passing test is not sufficient
 - Check that citations returned by the agent point to the expected documents
 
@@ -336,4 +331,4 @@ Common scenarios:
 - **By department/topic** (HR vs IT vs Finance) — classify query category, route to matching source
 - **By country** — extract or infer the target country from the conversation, route to the country-specific SharePoint site, fall back to a global source for unmatched countries
 
-See [patterns/orchestrator-variables.md](../patterns/orchestrator-variables.md) for full YAML examples of both patterns, including how to combine country routing with the JIT user context pattern (`Global.UserCountry` as default).
+See [patterns/orchestrator-variables.md](../../patterns/orchestrator-variables.md) for full YAML examples of both patterns, including how to combine country routing with the JIT user context pattern (`Global.UserCountry` as default).

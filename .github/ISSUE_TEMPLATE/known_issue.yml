@@ -1,5 +1,5 @@
 name: Known Issue (KB)
-description: Document a known issue with symptom, root cause, and mitigation for the troubleshoot agent's knowledge base.
+description: Document a known issue with symptom, root cause, and mitigation for the pattern library.
 labels: ["kb"]
 body:
   - type: dropdown
@@ -11,7 +11,7 @@ body:
         - copilot-studio-author
         - copilot-studio-manage
         - copilot-studio-test
-        - copilot-studio-troubleshoot
+        - copilot-studio-advisor
         - validate
         - new-topic
         - add-node
@@ -24,14 +24,12 @@ body:
         - add-global-variable
         - edit-agent
         - edit-triggers
-        - patterns
-        - authoring-tips
+        - int-patterns
         - lookup-schema
         - list-kinds
         - list-topics
         - run-tests
         - chat-with-agent
-        - known-issues
         - int-project-context
         - int-reference
         - All agents / General

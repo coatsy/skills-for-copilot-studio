@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.0.11
+
+### Added
+
+- 8 new patterns in the pattern library:
+  - `chain-of-thought-logging` — log reasoning steps for debugging
+  - `channel-aware-behavior` — adapt agent responses by channel (Teams, web, etc.)
+  - `conversation-history-variable` — persist conversation context across turns
+  - `deterministic-mcp-calls` — ensure reliable MCP tool invocations
+  - `knowledge-hold-message` — display hold messages during knowledge retrieval
+  - `line-breaks-in-messages` — control line break rendering in agent messages
+  - `rai-error-handling` — handle Responsible AI content filter errors gracefully
+  - `teams-production-hardening` — production readiness checklist for Teams deployments
+- `lookup-schema` eval scenario for schema validation testing
+- **`int-patterns`** skill expanded with index entries for all new patterns
+
+### Changed
+
+- `lookup-schema` skill description updated
+- Release branch workflow updated to target next week correctly
+
+### Upstream Changes
+
+- Upstream release `v1.0.11` (`release/2026-W19`)
+
 ## 1.0.10
 
 ### Changed

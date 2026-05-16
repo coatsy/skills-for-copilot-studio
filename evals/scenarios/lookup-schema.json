@@ -1,0 +1,83 @@
+{
+  "scenario_name": "lookup-schema",
+  "evals": [
+    {
+      "id": 1,
+      "name": "Lookup known definition - SendActivity",
+      "prompt": "What properties does the SendActivity kind have in the Copilot Studio YAML schema, and how should I use it in YAML?",
+      "fixture": "basic-agent",
+      "mock_scripts": [],
+      "checks": {
+        "skill_invoked": "copilot-studio:lookup-schema",
+        "stdout_contains": ["SendActivity", "text", "kind"],
+        "stdout_not_contains": ["not found", "ENOENT", "failed to execute", "general knowledge", "isn't loading"],
+        "exit_code": 0
+      }
+    },
+    {
+      "id": 2,
+      "name": "Lookup trigger kind - OnRecognizedIntent",
+      "prompt": "What does the Copilot Studio YAML schema definition named OnRecognizedIntent do, and which properties are required?",
+      "fixture": "basic-agent",
+      "mock_scripts": [],
+      "checks": {
+        "skill_invoked": "copilot-studio:lookup-schema",
+        "stdout_contains": ["OnRecognizedIntent", "intent", "trigger"],
+        "stdout_not_contains": ["not found", "ENOENT", "failed to execute", "general knowledge", "isn't loading"],
+        "exit_code": 0
+      }
+    },
+    {
+      "id": 3,
+      "name": "Lookup top-level kind - AdaptiveDialog",
+      "prompt": "How is the Copilot Studio YAML schema definition named AdaptiveDialog structured, including triggers and beginDialog?",
+      "fixture": "basic-agent",
+      "mock_scripts": [],
+      "checks": {
+        "skill_invoked": "copilot-studio:lookup-schema",
+        "stdout_contains": ["AdaptiveDialog", "beginDialog", "trigger"],
+        "stdout_not_contains": ["not found", "ENOENT", "failed to execute", "general knowledge", "isn't loading"],
+        "exit_code": 0
+      }
+    },
+    {
+      "id": 4,
+      "name": "Search for model-related definitions",
+      "prompt": "Search the Copilot Studio YAML schema for definitions related to the exact term model. Which schema elements are related to model definitions or descriptions?",
+      "fixture": "basic-agent",
+      "mock_scripts": [],
+      "checks": {
+        "skill_invoked": "copilot-studio:lookup-schema",
+        "stdout_contains": ["AIModelDefinition", "ModelProvider", "properties"],
+        "stdout_not_contains": ["ENOENT", "failed to execute", "general knowledge", "isn't loading"],
+        "exit_code": 0
+      }
+    },
+    {
+      "id": 5,
+      "name": "Resolve references in a definition",
+      "prompt": "Show me the fully resolved Copilot Studio YAML schema definition named QuestionInputSettings, including referenced sub-definitions.",
+      "fixture": "basic-agent",
+      "mock_scripts": [],
+      "checks": {
+        "skill_invoked": "copilot-studio:lookup-schema",
+        "stdout_contains": ["QuestionInputSettings", "properties", "validation"],
+        "stdout_not_contains": ["not found", "ENOENT", "failed to execute", "general knowledge", "isn't loading"],
+        "exit_code": 0
+      }
+    },
+    {
+      "id": 6,
+      "name": "Lookup non-existent definition",
+      "prompt": "What properties does the FakeNonExistentKind kind have in the Copilot Studio YAML schema?",
+      "fixture": "basic-agent",
+      "mock_scripts": [],
+      "checks": {
+        "skill_invoked": "copilot-studio:lookup-schema",
+        "stdout_contains": ["FakeNonExistentKind", "not a valid kind"],
+        "stdout_not_contains": ["ENOENT", "stack trace", "FATAL", "failed to execute", "isn't loading"],
+        "exit_code": 0
+      }
+    }
+  ]
+}

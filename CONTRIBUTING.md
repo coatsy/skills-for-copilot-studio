@@ -52,6 +52,23 @@ npm install
 npm run build
 ```
 
+## Syncing upstream content
+
+This repo consumes content from [`microsoft/skills-for-copilot-studio`](https://github.com/microsoft/skills-for-copilot-studio) via build-time fetch (not a fork merge). To update local content from an upstream release:
+
+```bash
+# Fetch content from a specific upstream release tag
+bash scripts/fetch-upstream.sh --version v1.0.10
+
+# Preview what would change without modifying files
+bash scripts/fetch-upstream.sh --version v1.0.10 --dry-run
+
+# Fetch the version currently tracked in upstream-version.json
+bash scripts/fetch-upstream.sh
+```
+
+This downloads the upstream release tarball and replaces agents, skills, scripts, templates, reference, and patterns directories with upstream content. Review the diff, then commit.
+
 ## VS Code extension development
 
 The VS Code extension packages the same agents, skills, and scripts into a `.vsix` for GitHub Copilot Chat. See [extension/PACKAGING.md](extension/PACKAGING.md) for the complete packaging guide.
@@ -168,6 +185,7 @@ skills/                  # Skill definitions (entry points + internal skills)
 patterns/                # Reusable design patterns (JIT glossary, orchestrator variables, etc.)
 scripts/                 # Bundled tools (schema lookup, chat-with-agent)
   src/                   # Source code
+  fetch-upstream.sh      # Fetch content from upstream releases
 reference/               # Copilot Studio YAML schema
 templates/               # YAML templates for common patterns
 tests/                   # Test runner for Copilot Studio Kit integration

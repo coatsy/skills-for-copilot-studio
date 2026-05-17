@@ -1,20 +1,17 @@
 name: Sync upstream
 
 on:
-  schedule:
-    # Every Monday at 06:00 UTC
-    - cron: "0 6 * * 1"
   workflow_call:
     inputs:
       upstream_version:
-        description: "Upstream version that triggered this sync (set by check-upstream-release)"
-        required: false
+        description: "Upstream version tag to fetch (e.g. v1.0.10)"
+        required: true
         type: string
   workflow_dispatch:
     inputs:
       upstream_version:
-        description: "Upstream version that triggered this sync (leave empty for scheduled runs)"
-        required: false
+        description: "Upstream version tag to fetch (e.g. v1.0.10)"
+        required: true
         type: string
 
 permissions:
@@ -25,89 +22,72 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout fork
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: coatsy/vscode-extension
-          fetch-depth: 0
+          fetch-depth: 1
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add upstream remote
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch upstream content
         run: |
-          git remote add upstream https://github.com/microsoft/skills-for-copilot-studio.git
-          git fetch upstream main
+          VERSION="${{ inputs.upstream_version }}"
+          echo "Fetching upstream content for $VERSION..."
+          bash scripts/fetch-upstream.sh --version "$VERSION"
 
-      - name: Check for new commits
-        id: check
+      - name: Check for changes
+        id: changes
         run: |
-          BEHIND=$(git rev-list --count HEAD..upstream/main)
-          echo "behind=$BEHIND" >> "$GITHUB_OUTPUT"
-          echo "Upstream is $BEHIND commit(s) ahead"
-
-      - name: Merge upstream
-        if: steps.check.outputs.behind != '0'
-        id: merge
-        run: |
-          BRANCH="chore/sync-upstream-$(date -u +%Y%m%d)"
-          git checkout -b "$BRANCH"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if git merge upstream/main --no-edit; then
-            echo "conflict=false" >> "$GITHUB_OUTPUT"
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes detected — local content already matches upstream ${{ inputs.upstream_version }}"
           else
-            echo "conflict=true" >> "$GITHUB_OUTPUT"
-            git merge --abort
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            CHANGED=$(git diff --stat | tail -1)
+            echo "Changes detected: $CHANGED"
           fi
 
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-
-      - name: Push and create PR
-        if: steps.check.outputs.behind != '0' && steps.merge.outputs.conflict == 'false'
+      - name: Create sync branch and PR
+        if: steps.changes.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH="${{ steps.merge.outputs.branch }}"
-          BEHIND="${{ steps.check.outputs.behind }}"
+          VERSION="${{ inputs.upstream_version }}"
+          TODAY=$(date -u +%Y%m%d)
+          BRANCH="chore/sync-upstream-${VERSION}-${TODAY}"
 
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore: sync upstream content from $VERSION"
           git push origin "$BRANCH"
 
-          # Build PR body with optional upstream version reference
-          UPSTREAM_VERSION="${{ inputs.upstream_version }}"
-          if [ -n "$UPSTREAM_VERSION" ]; then
-            VERSION_LINE="**Upstream release**: [$UPSTREAM_VERSION](https://github.com/microsoft/skills-for-copilot-studio/releases/tag/$UPSTREAM_VERSION)"
-          else
-            VERSION_LINE=""
-          fi
+          PR_BODY="Automated content sync from upstream microsoft/skills-for-copilot-studio.
 
-          PR_BODY="Automated sync of upstream microsoft/skills-for-copilot-studio main into coatsy/vscode-extension.
+          **Upstream release**: [$VERSION](https://github.com/microsoft/skills-for-copilot-studio/releases/tag/$VERSION)
 
-          **Commits behind**: $BEHIND"
+          ### Content synced
+          $(git diff --stat HEAD~1)
 
-          if [ -n "$VERSION_LINE" ]; then
-            PR_BODY="$PR_BODY
-          $VERSION_LINE"
-          fi
+          ---
+          *This PR was created automatically by the sync-upstream workflow.*"
 
-          PR_BODY="$PR_BODY
+          # Use REST API to avoid GraphQL SAML enforcement on fork parent
+          jq -n \
+            --arg title "chore: sync upstream content from $VERSION" \
+            --arg body "$PR_BODY" \
+            --arg head "$BRANCH" \
+            '{"title": $title, "body": $body, "head": $head, "base": "coatsy/vscode-extension", "draft": true}' \
+            | curl -sf \
+              -X POST \
+              -H "Authorization: token $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls" \
+              -d @-
 
-          This PR was created automatically by the sync-upstream workflow."
-
-          gh pr create \
-            --base coatsy/vscode-extension \
-            --head "$BRANCH" \
-            --title "chore: sync $BEHIND commit(s) from upstream main${UPSTREAM_VERSION:+ ($UPSTREAM_VERSION)}" \
-            --body "$PR_BODY" \
-            --label "upstream/sync" \
-            --draft
-
-      - name: Report conflict
-        if: steps.check.outputs.behind != '0' && steps.merge.outputs.conflict == 'true'
-        run: |
-          echo "::warning::Merge conflicts detected when syncing upstream. Manual resolution required."
-          echo "Run locally:"
-          echo "  git fetch upstream main"
-          echo "  git merge upstream/main"
-          echo "  # resolve conflicts"
-          echo "  git push"
+          echo "Created sync PR for $VERSION"

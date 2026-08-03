@@ -156,6 +156,24 @@ When a topic exists alongside other topics or other actions (i.e. TaskDialog), t
 - Use a global variable: the topic sets it (one-shot or by asking multiple questions and consolidating into the same variable via PowerFX), and the action's body references it via Power FX. This is more complex but can be useful for multi-turn data gathering that feeds somewhere else, especially if you need to do some logic on the data before sending it.
 - Output the collected data in a topic output variable so the orchestrator can pass it to the next action/topic.
 
+## Hand Off the Next Utterance to Generative Orchestration
+
+A `Question` node consumes the user's next message as an answer inside the current topic. That answer is not a new utterance for generative orchestration. Do not use `Question` when a welcome choice or routing topic only needs to tell the user what to type next and then let the orchestrator select a connector action.
+
+For that handoff, send a prompt and end the current dialog:
+
+```yaml
+- kind: SendActivity
+  id: sendMessage_requestReference
+  activity: "Please type your request with the reference number, for example: Check status REF-12345."
+
+- kind: EndDialog
+  id: endDialog_handoff
+  clearTopicQueue: true
+```
+
+The user's following message can then be recognized as a new utterance and routed by the generative orchestrator. Runtime-test the full path from the welcome choice through action selection; schema validation alone cannot prove this routing behavior.
+
 ## Power Fx Quick Reference
 
 - Expressions start with `=`: `value: =Text(Topic.num1 + Topic.num2)`

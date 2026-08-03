@@ -60,6 +60,11 @@ node ${CLAUDE_SKILL_DIR}/../../scripts/schema-lookup.bundle.js summary ModelCont
      Read: ${CLAUDE_SKILL_DIR}/sharepoint-actions.md
      ```
      This covers OData filter syntax, the critical `"'$filter'"` quoting pattern, which inputs should be Manual vs Automatic, and dynamic output handling.
+   - **If the connector is Microsoft Dataverse (`shared_commondataserviceforapps`)**, read the Dataverse-specific reference before making any edits:
+     ```
+     Read: ${CLAUDE_SKILL_DIR}/dataverse-actions.md
+     ```
+     This covers direct List rows retrieval, logical-name grounding, dynamic row schemas, filter inputs, and runtime field-selection checks.
 
 4. **Determine the action type** from the YAML:
    - If `action.kind` is `InvokeConnectorTaskAction` → regular connector action
@@ -175,5 +180,6 @@ node ${CLAUDE_SKILL_DIR}/../../scripts/schema-lookup.bundle.js summary ModelCont
 - **Property names must match the connector definition** — use `connector-lookup operation` to verify exact property names.
 - **ManualTaskInput values are strings only** — if the value needs to be a number, enum, or complex type, warn the user that it may need UI configuration.
 - **Output propertyName values must match the connector definition's output schema** — use `connector-lookup operation` to see available output properties.
+- **Dataverse List rows descriptions must name exact logical columns** — dynamic schemas can contain similarly named fields whose values look plausible. Verify the filter and returned fields against the pulled `dynamicOutputSchema`, and preserve that generated schema.
 - **MCP actions must not have `AutomaticTaskInput` entries** — the MCP protocol handles tool parameter discovery dynamically. `ManualTaskInput` entries are OK for passing context (e.g., user identity via Power Fx expressions like `=System.User.Email`).
 - **MCP modelDescription should be single-line** — multi-line descriptions have been reported to break MCP tool registration after push.

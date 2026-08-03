@@ -127,6 +127,12 @@ Some connectors (notably SharePoint) use OData parameters like `$filter`, `$orde
 
 Never mix these two formats.
 
+### Dataverse List Rows
+
+For Microsoft Dataverse `ListRecordsWithOrganization`, keep `organization` and `entityName` fixed with `ManualTaskInput`. Use `AutomaticTaskInput` for `"'$filter'"` only when the filter depends on conversation context. The table name and every filter/output column must be Dataverse logical names verified from metadata or the pulled `dynamicOutputSchema`.
+
+List rows returns a dynamic table schema. A successful call does not prove that the orchestrator selected the correct returned field. Name the exact return columns in `modelDescription`, explicitly exclude confusing legacy fields when necessary, and verify the answer against a known Dataverse row at runtime. See `skills/edit-action/dataverse-actions.md` for the complete pattern.
+
 ## System Variables
 
 | Variable | Description |

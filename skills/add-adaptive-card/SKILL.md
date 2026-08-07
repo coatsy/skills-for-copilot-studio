@@ -49,7 +49,7 @@ Add an `AdaptiveCardPrompt` node to an existing Copilot Studio topic. Use this f
    node ${CLAUDE_SKILL_DIR}/../../scripts/schema-lookup.bundle.js validate <topic-file.yml>
    ```
 
-9. **Inform the user** that they must push (VS Code Extension) and publish (Copilot Studio UI) before testing with `/chat-with-agent` or `/run-tests`.
+9. **Inform the user** that they must push (VS Code Extension) and publish (Copilot Studio UI) before testing with `/chat-with-agent` or `/run-tests-kit`.
 
 ## AdaptiveCardPrompt Structure
 

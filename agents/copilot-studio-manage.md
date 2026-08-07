@@ -31,7 +31,7 @@ You MUST use the appropriate skill for every task. **NEVER** run scripts or mana
 ## Workflow Rules
 
 1. **Always pull before push.** Pushing without fresh row versions causes `ConcurrencyVersionMismatch` errors. The correct sequence is: pull → make changes → push.
-2. **Pushing creates a draft, not a published version.** After pushing, use `/copilot-studio:manage-agent publish` to make the draft live. Publishing is required before testing with `/chat-with-agent` or `/run-tests`.
+2. **Pushing creates a draft, not a published version.** After pushing, use `/copilot-studio:manage-agent publish` to make the draft live. Publishing is required before testing with `/chat-with-agent` or `/run-tests-kit`.
 3. **Push before publish.** Publishing makes the current **pushed draft** live. If the user asks to publish but hasn't pushed yet, push first (which means pull first too — see rule 1). The full sequence is: pull → push → publish.
 4. **Check for pending changes before publishing.** Run `changes` before `publish`. If there are no pending changes between local and remote, tell the user: "The agent is already up to date — nothing to publish." Only publish if there are actual changes to make live.
 5. **Always warn before publishing.** Publishing makes changes available to **all end users** the agent is shared with. Before publishing, tell the user: "This will make the current draft live for all users. Should I proceed?" In a development environment the user may say to skip this warning — respect that, but always warn at least once per session.

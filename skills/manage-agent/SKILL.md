@@ -184,7 +184,7 @@ node ${CLAUDE_SKILL_DIR}/../../scripts/manage-agent.bundle.js changes \
 
 ### Publish (make draft agent live)
 
-Publishes the agent so that the current draft becomes the live version reachable by external clients (`/chat-with-agent`, `/run-tests`, Teams, etc.). Uses the Dataverse `PvaPublish` bound action directly (no LSP binary needed).
+Publishes the agent so that the current draft becomes the live version reachable by external clients (`/chat-with-agent`, `/run-tests-kit`, Teams, etc.). Uses the Dataverse `PvaPublish` bound action directly (no LSP binary needed).
 
 **IMPORTANT — Publishing makes this version of the agent available to ALL users the agent is shared with.** If you are working in a development environment this is fine, but if the agent is shared with production users, **always confirm with the user before publishing.** Ask: "This will publish the agent and make it live for all users it's shared with. Should I proceed?"
 
@@ -209,7 +209,7 @@ Optional: `--agent-id "<agentId>"` overrides the bot ID from `conn.json`.
 
 #### When to publish
 
-- After a successful `push`, if the user wants changes to be testable via `/chat-with-agent` or `/run-tests`
+- After a successful `push`, if the user wants changes to be testable via `/chat-with-agent` or `/run-tests-kit`
 - In an improvement loop (edit → push → publish → test), publish is required between push and test
 - The command confirms publish completion via API — **do not use time-based waits**
 

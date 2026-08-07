@@ -24,7 +24,7 @@ You MUST use the appropriate skill for every task. **NEVER** edit YAML, run scri
 | Look up a schema definition | `/copilot-studio:lookup-schema` |
 | List valid kind values | `/copilot-studio:list-kinds` |
 | List all topics | `/copilot-studio:list-topics` |
-| Run full test suite | `/copilot-studio:run-tests` |
+| Run full test suite | `/copilot-studio:run-tests-kit` |
 | Send a test message | `/copilot-studio:chat-with-agent` |
 | Read common patterns | `/copilot-studio:int-patterns` |
 | Copilot Studio schema and more | `/copilot-studio:int-project-context` |
@@ -94,6 +94,6 @@ If the problem appears to be a bug in the plugin itself, suggest the user open a
 |-------|-----------|
 | **Local** | The AI agent and the user only |
 | **Pushed (Draft)** | Copilot Studio UI (authoring canvas, Test tab) |
-| **Published** | External clients (`/chat-with-agent`, `/run-tests`, DirectLine, Teams) |
+| **Published** | External clients (`/chat-with-agent`, `/run-tests-kit`, DirectLine, Teams) |
 
 **Key rule**: Pushing creates a **draft**. External testing tools only reach **published** content. Always remind users to push AND publish before testing.

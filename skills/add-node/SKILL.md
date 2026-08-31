@@ -61,6 +61,7 @@ When the agent has `GenerativeActionsEnabled: true`:
 
 - Prefer **AutomaticTaskInput** over Question nodes for collecting user info (the orchestrator handles prompting automatically).
 - Still use Question nodes when: conditional asks (ask X only if Y), or end-of-flow confirmations.
+- A `Question` node consumes the next user message inside the current topic. If the next message must be routed as a new utterance so the orchestrator can select another topic or connector action, use `SendActivity` followed by `EndDialog` with `clearTopicQueue: true` instead.
 - Prefer **topic outputs** over SendActivity for returning results.
 - Do NOT use SendActivity to show final outputs unless it's a precise mid-flow message.
 

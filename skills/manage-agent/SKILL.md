@@ -213,6 +213,12 @@ Optional: `--agent-id "<agentId>"` overrides the bot ID from `conn.json`.
 - In an improvement loop (edit → push → publish → test), publish is required between push and test
 - The command confirms publish completion via API — **do not use time-based waits**
 
+#### Publish scope
+
+`publish` promotes the Copilot Studio agent draft. It does not publish, activate, or repair independent runtime dependencies such as Power Automate cloud flows or connector connections. A flow definition can also be updated independently without requiring another agent publish.
+
+When an agent journey invokes a flow or connector, verify each resource separately: confirm the bot `publishedon` timestamp changed, confirm the flow is active after any flow edit, and run an end-to-end behavior test. Do not infer dependency health from the agent publish result alone.
+
 ### List Agents
 
 Uses Dataverse REST API directly (no LSP binary needed). `--client-id` is optional.
@@ -265,5 +271,6 @@ All commands output JSON to stdout with a `status` field:
 | ConcurrencyVersionMismatch | Push without fresh row versions | Pull first, then push |
 | Token expired + silent refresh failed | Refresh token expired (~90 days) | Run `auth` command for new device code flow |
 | Binary missing | Extension installed but binary not present | Reinstall the extension |
+| HTTP 403 from push/pull while other environment APIs work | LSP/Island authoring access is denied for this operation | Report the exact error, try the VS Code extension UI, and use the Copilot Studio portal as the authoring fallback. Treat local files as out of sync until a later pull succeeds. |
 | PvaPublish failed | Insufficient permissions or bot not found | Verify the user has publish permissions and the agent ID is correct |
 | Publish timed out | Publish still in progress after timeout | Increase `--timeout` or check the Copilot Studio UI for status |
